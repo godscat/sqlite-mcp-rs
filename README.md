@@ -249,6 +249,155 @@ sqlite-mcp --db-path /path/to/database.db --readonly
 }
 ```
 
+## Filter Parameter Usage
+
+`query_records` 工具的 `filters` 参数允许灵活的查询条件。
+
+### 基本语法
+
+```json
+{
+  "filters": {
+    "column_name": {
+      "$operator": "value"
+    }
+  }
+}
+```
+
+### 支持的操作符
+
+| 操作符 | 描述 | 示例 |
+|--------|------|------|
+| `$eq` | 等于 | `{"age": {"$eq": 25}}` |
+| `$ne` | 不等于 | `{"status": {"$ne": "deleted"}}` |
+| `$gt` | 大于 | `{"price": {"$gt": 100}}` |
+| `$gte` | 大于等于 | `{"age": {"$gte": 18}}` |
+| `$lt` | 小于 | `{"quantity": {"$lt": 10}}` |
+| `$lte` | 小于等于 | `{"score": {"$lte": 90}}` |
+| `$in` | 在列表中 | `{"category": {"$in": ["book", "movie"]}}` |
+| `$like` | 模糊匹配（使用 % 通配符） | `{"name": {"$like": "%张%"}}` |
+
+### 逻辑关系
+
+- **多列条件**：使用 AND 逻辑（所有条件必须满足）
+- **同列多操作符**：使用 OR 逻辑（任一条件满足即可）
+
+### 使用示例
+
+#### 1. 简单等于查询
+
+查询年龄等于 25 的用户：
+
+```json
+{
+  "table": "users",
+  "filters": {
+    "age": {"$eq": 25}
+  }
+}
+```
+
+#### 2. 范围查询
+
+查询年龄在 18 到 30 之间的用户：
+
+```json
+{
+  "table": "users",
+  "filters": {
+    "age": {"$gte": 18, "$lte": 30}
+  }
+}
+```
+
+#### 3. 模糊匹配
+
+查询名字包含"张"的用户：
+
+```json
+{
+  "table": "users",
+  "filters": {
+    "name": {"$like": "%张%"}
+  }
+}
+```
+
+#### 4. 多条件组合（AND 逻辑）
+
+查询年龄大于等于 18 并且名字包含"张"的用户：
+
+```json
+{
+  "table": "users",
+  "filters": {
+    "age": {"$gte": 18},
+    "name": {"$like": "%张%"}
+  }
+}
+```
+
+**注意**：不同列的条件使用 AND 逻辑，表示所有条件都必须满足。
+
+#### 5. 同列多操作符（OR 逻辑）
+
+查询年龄小于 18 或大于 65 的用户：
+
+```json
+{
+  "table": "users",
+  "filters": {
+    "age": {"$lt": 18, "$gt": 65}
+  }
+}
+```
+
+**注意**：同一列的多个操作符使用 OR 逻辑，表示任一条件满足即可。
+
+#### 6. 列表匹配
+
+查询分类为 book 或 movie 的产品：
+
+```json
+{
+  "table": "products",
+  "filters": {
+    "category": {"$in": ["book", "movie"]}
+  }
+}
+```
+
+#### 7. 复杂组合
+
+查询价格为 100 以上、分类为 book 且名称包含"教程"的产品：
+
+```json
+{
+  "table": "products",
+  "filters": {
+    "price": {"$gte": 100},
+    "category": {"$eq": "book"},
+    "name": {"$like": "%教程%"}
+  }
+}
+```
+
+### 分页
+
+结合 `limit` 和 `offset` 实现分页：
+
+```json
+{
+  "table": "users",
+  "filters": {
+    "age": {"$gte": 18}
+  },
+  "limit": 10,
+  "offset": 0
+}
+```
+
 ## Claude Desktop 集成
 
 在 Claude Desktop 的配置文件中添加以下内容：

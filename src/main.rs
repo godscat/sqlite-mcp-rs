@@ -198,7 +198,38 @@ fn handle_tools_list(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
                             },
                             "filters": {
                                 "type": "object",
-                                "description": "Filter conditions (optional)"
+                                "description": "Filter conditions. Multiple columns are combined with AND. Supported operators: $eq, $ne, $gt, $gte, $lt, $lte, $in, $like",
+                                "additionalProperties": {
+                                    "type": "object",
+                                    "properties": {
+                                        "$eq": {
+                                            "description": "Equals"
+                                        },
+                                        "$ne": {
+                                            "description": "Not equals"
+                                        },
+                                        "$gt": {
+                                            "description": "Greater than"
+                                        },
+                                        "$gte": {
+                                            "description": "Greater than or equal"
+                                        },
+                                        "$lt": {
+                                            "description": "Less than"
+                                        },
+                                        "$lte": {
+                                            "description": "Less than or equal"
+                                        },
+                                        "$in": {
+                                            "type": "array",
+                                            "description": "Value in list"
+                                        },
+                                        "$like": {
+                                            "type": "string",
+                                            "description": "Pattern matching (use % for wildcard)"
+                                        }
+                                    }
+                                }
                             },
                             "limit": {
                                 "type": "integer",
