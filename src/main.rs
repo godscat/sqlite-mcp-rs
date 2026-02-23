@@ -73,6 +73,9 @@ async fn run_stdio_server(db: Arc<dyn db::DatabaseAdapter>) -> anyhow::Result<()
 
         tracing::debug!("Received: {}", line);
 
+        let parsed: serde_json::Result<serde_json::Value> = serde_json::from_str(line);
+        let request_id = parsed.as_ref().ok().and_then(|v| v.get("id").cloned());
+
         match handle_message(&db, line).await {
             Ok(response) => {
                 if let Some(resp) = response {
@@ -87,7 +90,7 @@ async fn run_stdio_server(db: Arc<dyn db::DatabaseAdapter>) -> anyhow::Result<()
                 tracing::error!("Error handling message: {}", e);
                 let error_response = serde_json::json!({
                     "jsonrpc": "2.0",
-                    "id": serde_json::Value::Null,
+                    "id": request_id.unwrap_or_else(|| serde_json::Value::Null),
                     "error": {
                         "code": -32603,
                         "message": format!("Internal error: {}", e)

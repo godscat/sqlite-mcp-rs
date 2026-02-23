@@ -42,6 +42,7 @@ pub trait DatabaseAdapter: Send + Sync {
 #[derive(Debug, Clone, Serialize)]
 pub struct TableSchema {
     pub name: String,
+    pub desc: Option<String>,
     pub columns: Vec<ColumnInfo>,
     pub primary_key: Option<String>,
 }
@@ -49,6 +50,7 @@ pub struct TableSchema {
 #[derive(Debug, Clone, Serialize)]
 pub struct ColumnInfo {
     pub name: String,
+    pub desc: Option<String>,
     pub data_type: String,
     pub not_null: bool,
     pub default_value: Option<String>,

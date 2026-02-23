@@ -27,6 +27,143 @@ impl SqliteDatabase {
         })
     }
 
+    fn ensure_auxiliary_tables_exist(&self, conn: &rusqlite::Connection) -> anyhow::Result<bool> {
+        let table_comment_exists: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='_table_comment'",
+            [],
+            |row| row.get(0),
+        ).map_err(|e| anyhow!("Failed to check if _table_comment exists: {}", e))?;
+
+        let column_comment_exists: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='_table_column_comment'",
+            [],
+            |row| row.get(0),
+        ).map_err(|e| anyhow!("Failed to check if _table_column_comment exists: {}", e))?;
+
+        if table_comment_exists == 0 || column_comment_exists == 0 {
+            info!("Creating auxiliary tables for comments");
+            let ddl = std::fs::read_to_string("sql/sqlite_assist_table_ddl.sql")
+                .map_err(|e| anyhow!("Failed to read DDL file from sql/sqlite_assist_table_ddl.sql: {}", e))?;
+
+            debug!("DDL content:\n{}", ddl);
+
+            let tx = conn.unchecked_transaction()
+                .map_err(|e| anyhow!("Failed to begin transaction for creating auxiliary tables: {}", e))?;
+
+            let sql_statements = vec![
+                "CREATE TABLE IF NOT EXISTS [_table_comment] (
+  [id] INTEGER PRIMARY KEY AUTOINCREMENT,
+  [table_name] TEXT NOT NULL,
+  [table_desc] TEXT NOT NULL,
+  [ctime] INTEGER DEFAULT (strftime('%s', 'now')),
+  [utime] INTEGER DEFAULT (strftime('%s', 'now')),
+  UNIQUE ([table_name])
+)",
+                "CREATE TABLE IF NOT EXISTS [_table_column_comment] (
+  [id] INTEGER PRIMARY KEY AUTOINCREMENT,
+  [table_name] TEXT NOT NULL,
+  [column_name] TEXT NOT NULL,
+  [column_desc] TEXT
+)",
+                "CREATE UNIQUE INDEX IF NOT EXISTS [idx_table_column_unique] ON [_table_column_comment] ([table_name], [column_name])"
+            ];
+
+            for (i, stmt) in sql_statements.iter().enumerate() {
+                debug!("Executing DDL statement {}: {}", i, stmt);
+                let result = tx.execute(stmt, [])
+                    .map_err(|e| anyhow!("Failed to execute DDL statement {}: {}", i, e))?;
+                debug!("DDL statement {} affected {} rows", i, result);
+            }
+
+            tx.commit()
+                .map_err(|e| anyhow!("Failed to commit transaction for creating auxiliary tables: {}", e))?;
+
+            info!("Auxiliary tables created successfully");
+
+            conn.query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='_table_comment'",
+                [],
+                |row| row.get::<_, i64>(0),
+            ).map_err(|e| anyhow!("Failed to verify _table_comment was created: {}", e))?;
+
+            conn.query_row(
+                "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name='_table_column_comment'",
+                [],
+                |row| row.get::<_, i64>(0),
+            ).map_err(|e| anyhow!("Failed to verify _table_column_comment was created: {}", e))?;
+
+            return Ok(true);
+        }
+
+        debug!("Auxiliary tables already exist, ensuring indexes exist");
+
+        conn.execute(
+            "CREATE UNIQUE INDEX IF NOT EXISTS [idx_table_column_unique] ON [_table_column_comment] ([table_name] ASC, [column_name] ASC)",
+            []
+        ).map_err(|e| anyhow!("Failed to create index on _table_column_comment: {}", e))?;
+
+        debug!("Index on _table_column_comment ensured");
+        Ok(false)
+    }
+
+    fn initialize_default_table_comment(&self, conn: &rusqlite::Connection, table: &str) -> anyhow::Result<()> {
+        let sql = "INSERT OR IGNORE INTO _table_comment (table_name, table_desc) VALUES (?, ?)";
+        conn.execute(sql, [table, table])
+            .map_err(|e| anyhow!("Failed to initialize default table comment for '{}': {}", table, e))?;
+        debug!("Initialized default comment for table '{}'", table);
+        Ok(())
+    }
+
+    fn initialize_default_column_comments(&self, conn: &rusqlite::Connection, table: &str, columns: &[ColumnInfo]) -> anyhow::Result<()> {
+        for column in columns {
+            let sql = "INSERT OR IGNORE INTO _table_column_comment (table_name, column_name, column_desc) VALUES (?, ?, ?)";
+            conn.execute(sql, [table, &column.name, &column.name])
+                .map_err(|e| anyhow!("Failed to initialize default column comment for '{}.{}': {}", table, column.name, e))?;
+        }
+        debug!("Initialized default comments for {} columns in table '{}'", columns.len(), table);
+        Ok(())
+    }
+
+    fn get_table_comment(&self, conn: &rusqlite::Connection, table: &str) -> anyhow::Result<Option<String>> {
+        let result = conn.query_row(
+            "SELECT table_desc FROM _table_comment WHERE table_name = ?",
+            [table],
+            |row| row.get::<_, String>(0),
+        );
+
+        match result {
+            Ok(desc) => {
+                debug!("Retrieved table comment for '{}': {}", table, desc);
+                Ok(Some(desc))
+            },
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                debug!("No table comment found for '{}'", table);
+                Ok(None)
+            },
+            Err(e) => Err(anyhow!("Failed to query table comment for '{}': {}", table, e)),
+        }
+    }
+
+    fn get_column_comment(&self, conn: &rusqlite::Connection, table: &str, column: &str) -> anyhow::Result<Option<String>> {
+        let result = conn.query_row(
+            "SELECT column_desc FROM _table_column_comment WHERE table_name = ? AND column_name = ?",
+            [table, column],
+            |row| row.get::<_, String>(0),
+        );
+
+        match result {
+            Ok(desc) => {
+                debug!("Retrieved column comment for '{}.{}': {}", table, column, desc);
+                Ok(Some(desc))
+            },
+            Err(rusqlite::Error::QueryReturnedNoRows) => {
+                debug!("No column comment found for '{}.{}'", table, column);
+                Ok(None)
+            },
+            Err(e) => Err(anyhow!("Failed to query column comment for '{}.{}': {}", table, column, e)),
+        }
+    }
+
 
 }
 
@@ -174,29 +311,32 @@ impl DatabaseAdapter for SqliteDatabase {
     async fn get_schema(&self, table: &str) -> anyhow::Result<TableSchema> {
         debug!("Getting schema for table '{}'", table);
         let conn = self.conn.lock().map_err(|e| anyhow!("Failed to lock connection: {}", e))?;
-        
+
+        self.ensure_auxiliary_tables_exist(&conn)?;
+
         let mut stmt = conn.prepare(&format!("PRAGMA table_info({})", table))?;
-        
+
         let mut rows = stmt.query([])?;
         let mut columns = Vec::new();
         let mut primary_keys = Vec::new();
-        
+
         while let Some(row) = rows.next()? {
             let is_pk: i32 = row.get(5)?;
             if is_pk > 0 {
                 let name: String = row.get(1)?;
                 primary_keys.push(name.clone());
             }
-            
+
             columns.push(ColumnInfo {
                 name: row.get::<_, String>(1)?,
+                desc: None,
                 data_type: row.get::<_, Option<String>>(2)?.unwrap_or_else(|| "ANY".to_string()),
                 not_null: row.get::<_, i32>(3)? == 1,
                 default_value: row.get::<_, Option<String>>(4)?,
                 is_primary_key: is_pk > 0,
             });
         }
-        
+
         let primary_key = if primary_keys.len() == 1 {
             primary_keys[0].clone()
         } else if primary_keys.is_empty() {
@@ -204,10 +344,25 @@ impl DatabaseAdapter for SqliteDatabase {
         } else {
             return Err(anyhow!("Composite primary keys not supported"));
         };
-        
+
+        self.initialize_default_table_comment(&conn, table)?;
+        self.initialize_default_column_comments(&conn, table, &columns)?;
+
+        let table_desc = self.get_table_comment(&conn, table)?.unwrap_or_else(|| table.to_string());
+
+        let mut columns_with_desc = Vec::new();
+        for column in columns {
+            let column_desc = self.get_column_comment(&conn, table, &column.name)?.unwrap_or_else(|| column.name.clone());
+            columns_with_desc.push(ColumnInfo {
+                desc: Some(column_desc),
+                ..column
+            });
+        }
+
         Ok(TableSchema {
             name: table.to_string(),
-            columns,
+            desc: Some(table_desc),
+            columns: columns_with_desc,
             primary_key: Some(primary_key),
         })
     }
