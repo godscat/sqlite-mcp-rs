@@ -311,14 +311,14 @@ debug!("Request: {}", serde_json::to_string_pretty(&json)?);
 cargo build --release
 
 # 可执行文件位置
-# Linux/macOS: target/release/sqlite-mcp  
-# Windows: target/release/sqlite-mcp.exe
+# Linux/macOS: target/release/sqlite-mcp-rs  
+# Windows: target/release/sqlite-mcp-rs.exe
 
 # Claude Desktop 配置示例
 {
   "mcpServers": {
     "sqlite": {
-      "command": "/path/to/sqlite-mcp",
+      "command": "/path/to/sqlite-mcp-rs",
       "args": ["--db-path", "/path/to/database.db"]
     }
   }

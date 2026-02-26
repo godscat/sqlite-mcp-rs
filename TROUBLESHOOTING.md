@@ -17,13 +17,13 @@
 
 ```bash
 # 方式 1：重定向 stderr 到日志文件
-./target/release/sqlite-mcp.exe --db-path your_database.db 2>> server.log
+./target/release/sqlite-mcp-rs.exe --db-path your_database.db 2>> server.log
 
 # 方式 2：完全禁用日志输出
-RUST_LOG=off ./target/release/sqlite-mcp.exe --db-path your_database.db
+RUST_LOG=off ./target/release/sqlite-mcp-rs.exe --db-path your_database.db
 
 # 方式 3：只显示错误日志
-RUST_LOG=error ./target/release/sqlite-mcp.exe --db-path your_database.db
+RUST_LOG=error ./target/release/sqlite-mcp-rs.exe --db-path your_database.db
 ```
 
 ### 3. Claude Desktop 配置
@@ -35,7 +35,7 @@ RUST_LOG=error ./target/release/sqlite-mcp.exe --db-path your_database.db
 {
   "mcpServers": {
     "sqlite": {
-      "command": "E:/Workspace/mcp-servers/sqlite-mcp/target/release/sqlite-mcp.exe",
+      "command": "E:/Workspace/mcp-servers/sqlite-mcp/target/release/sqlite-mcp-rs.exe",
       "args": ["--db-path", "E:/Workspace/mcp-servers/sqlite-mcp/test/test.db"],
       "env": {
         "RUST_LOG": "error"
@@ -50,7 +50,7 @@ RUST_LOG=error ./target/release/sqlite-mcp.exe --db-path your_database.db
 {
   "mcpServers": {
     "sqlite": {
-      "command": "/path/to/sqlite-mcp",
+      "command": "/path/to/sqlite-mcp-rs",
       "args": ["--db-path", "/path/to/database.db"],
       "env": {
         "RUST_LOG": "error"
@@ -67,10 +67,10 @@ RUST_LOG=error ./target/release/sqlite-mcp.exe --db-path your_database.db
 ```bash
 # 测试初始化（应该只返回 JSON，没有其他输出）
 echo '{"jsonrpc": "2.0", "id": 1, "method": "initialize", "params": {"protocolVersion": "2025-06-18", "capabilities": {}}}' | \
-  ./target/release/sqlite-mcp.exe --db-path test/test.db 2>/dev/null
+  ./target/release/sqlite-mcp-rs.exe --db-path test/test.db 2>/dev/null
 
 # 预期输出（应该是纯 JSON）：
-# {"id":1,"jsonrpc":"2.0","result":{"capabilities":{"tools":{"listChanged":false},"protocolVersion":"2025-06-18","serverInfo":{"serverInfo":{"name":"sqlite-mcp","version":"0.1.0"}}}
+# {"id":1,"jsonrpc":"2.0","result":{"capabilities":{"tools":{"listChanged":false},"protocolVersion":"2025-06-18","serverInfo":{"serverInfo":{"name":"sqlite-mcp-rs","version":"0.1.0"}}}
 ```
 
 ## 环境变量说明
@@ -94,12 +94,12 @@ cargo build --release
 
 **解决方案 2**：完全禁用日志
 ```bash
-RUST_LOG=off ./target/release/sqlite-mcp.exe --db-path your_database.db
+RUST_LOG=off ./target/release/sqlite-mcp-rs.exe --db-path your_database.db
 ```
 
 **解决方案 3**：重定向 stderr
 ```bash
-./target/release/sqlite-mcp.exe --db-path your_database.db 2>/dev/null
+./target/release/sqlite-mcp-rs.exe --db-path your_database.db 2>/dev/null
 ```
 
 ### 问题：服务器无法连接到数据库

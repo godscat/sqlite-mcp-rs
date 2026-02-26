@@ -74,7 +74,7 @@ sqlite-mcp/
 ├── AGENTS.md              # 开发指南
 ├── test_data.sql          # 测试数据脚本
 ├── demo.py               # 完整演示脚本
-└── target/release/sqlite-mcp.exe  # 可执行文件
+└── target/release/sqlite-mcp-rs.exe  # 可执行文件
 
 辅助表（首次使用时自动创建）：
 - _table_comment        # 存储表描述信息
@@ -101,7 +101,7 @@ sqlite-mcp/
 
 2. **运行服务器**：
    ```bash
-   ./target/release/sqlite-mcp.exe --db-path your_database.db
+   ./target/release/sqlite-mcp-rs.exe --db-path your_database.db
    ```
 
 3. **与服务器交互**：发送 JSON-RPC 请求到标准输入

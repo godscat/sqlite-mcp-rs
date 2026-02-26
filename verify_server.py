@@ -29,7 +29,7 @@ def test_server():
     try:
         # 运行服务器，捕获 stdout
         result = subprocess.run(
-            ["./target/release/sqlite-mcp.exe", "--db-path", "test/test.db"],
+            ["./target/release/sqlite-mcp-rs.exe", "--db-path", "test/test.db"],
             input=request_str + "\n",
             stdout=subprocess.PIPE,
             stderr=subprocess.DEVNULL,  # 忽略 stderr 输出

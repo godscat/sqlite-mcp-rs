@@ -10,7 +10,7 @@ use tracing::info;
 use tracing_subscriber::{EnvFilter, FmtSubscriber};
 
 #[derive(Parser, Debug)]
-#[command(name = "sqlite-mcp")]
+#[command(name = "sqlite-mcp-rs")]
 #[command(about = "SQLite MCP Server - Fast Rust implementation with JSON-based database operations", long_about = None)]
 struct Args {
     /// SQLite database file path
@@ -148,7 +148,7 @@ fn handle_initialize(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
                 }
             },
             "serverInfo": {
-                "name": "sqlite-mcp",
+                "name": "sqlite-mcp-rs",
                 "version": "0.1.0"
             }
         }

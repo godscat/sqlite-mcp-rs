@@ -36,7 +36,7 @@ python verify_server.py
 {
   "mcpServers": {
     "sqlite": {
-      "command": "/path/to/sqlite-mcp",
+"command": "/path/to/sqlite-mcp-rs",
       "args": ["--db-path", "/path/to/database.db"],
       "env": {
         "RUST_LOG": "error"
@@ -44,7 +44,6 @@ python verify_server.py
     }
   }
 }
-```
 
 ## 步骤 5: 重启 Claude Desktop
 
@@ -56,7 +55,7 @@ python verify_server.py
 {
   "mcpServers": {
     "sqlite-readonly": {
-      "command": "/path/to/sqlite-mcp",
+      "command": "/path/to/sqlite-mcp-rs",
       "args": ["--db-path", "/path/to/database.db", "--readonly"],
       "env": { "RUST_LOG": "error" }
     }

@@ -22,7 +22,7 @@
 cargo build --release
 
 # 运行
-./target/release/sqlite-mcp --db-path /path/to/database.db
+./target/release/sqlite-mcp-rs --db-path /path/to/database.db
 ```
 
 > 详细的配置步骤请参阅 [快速开始指南](QUICKSTART.md)
@@ -395,7 +395,7 @@ cargo build --release
 {
   "mcpServers": {
     "sqlite": {
-      "command": "E:\\\\path\\\\to\\\\sqlite-mcp.exe",
+      "command": "E:\\\\path\\\\to\\\\sqlite-mcp-rs.exe",
       "args": [
         "--db-path",
         "C:\\\\path\\\\to\\\\database.db"
@@ -409,8 +409,8 @@ cargo build --release
 ```json
 {
   "mcpServers": {
-    "sqlite": {
-      "command": "/path/to/sqlite-mcp",
+"sqlite": {
+      "command": "/path/to/sqlite-mcp-rs",
       "args": [
         "--db-path",
         "/path/to/database.db"
@@ -418,14 +418,13 @@ cargo build --release
     }
   }
 }
-```
 
 只读模式示例：
 ```json
 {
   "mcpServers": {
     "sqlite-readonly": {
-      "command": "/path/to/sqlite-mcp",
+      "command": "/path/to/sqlite-mcp-rs",
       "args": [
         "--db-path",
         "/path/to/database.db",
@@ -478,10 +477,10 @@ trait DatabaseAdapter: Send + Sync {
 
 ```bash
 # 禁用日志（推荐生产环境）
-RUST_LOG=off ./target/release/sqlite-mcp --db-path database.db
+RUST_LOG=off ./target/release/sqlite-mcp-rs --db-path database.db
 
 # 只显示错误
-RUST_LOG=error ./target/release/sqlite-mcp --db-path database.db
+RUST_LOG=error ./target/release/sqlite-mcp-rs --db-path database.db
 ```
 
 更多故障排除信息请参阅 [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
