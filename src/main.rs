@@ -188,7 +188,7 @@ fn handle_tools_list(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
                 {
                     "name": "query_records",
                     "title": "Query Records",
-                    "description": "Query records from a table with optional filters and ordering",
+                    "description": "Query records from a table with optional filters and ordering. Returns: records (array), total (count of all matching records before limit/offset), returned (count of records in this response)",
                     "inputSchema": {
                         "type": "object",
                         "properties": {

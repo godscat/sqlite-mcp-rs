@@ -646,6 +646,39 @@ impl DatabaseAdapter for SqliteDatabase {
         Ok(results)
     }
 
+    async fn count(
+        &self,
+        table: &str,
+        filters: Option<QueryFilter>,
+    ) -> anyhow::Result<usize> {
+        debug!("Counting records in table '{}' with filters: {:?}", table, filters);
+        let conn = self
+            .conn
+            .lock()
+            .map_err(|e| anyhow!("Failed to lock connection: {}", e))?;
+
+        let mut sql = format!("SELECT COUNT(*) FROM {}", table);
+        let mut params = Vec::new();
+
+        if let Some(filter) = filters {
+            let (where_clause, where_params) = build_where_clause(&filter)?;
+            sql.push_str(&format!(" WHERE {}", where_clause));
+            params = where_params;
+        }
+
+        debug!("Executing SQL: {}", sql);
+        debug!("Params: {:?}", params);
+
+        let param_refs: Vec<&dyn rusqlite::ToSql> =
+            params.iter().map(|p| p as &dyn rusqlite::ToSql).collect();
+
+        let count: i64 = conn.query_row(&sql, param_refs.as_slice(), |row| row.get(0))?;
+        let count = count as usize;
+
+        debug!("Count returned {} records", count);
+        Ok(count)
+    }
+
     async fn insert(&self, table: &str, data: serde_json::Value) -> anyhow::Result<i64> {
         if self.readonly {
             return Err(anyhow!("Cannot insert in read-only mode"));

@@ -181,6 +181,32 @@
 {"orders": [{"random": true}], "limit": 5}
 ```
 
+**响应:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 5,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"records\":[{\"id\":1,\"name\":\"Alice\",\"age\":30},{\"id\":2,\"name\":\"Bob\",\"age\":28}],\"total\":50,\"returned\":2}"
+      }
+    ]
+  }
+}
+```
+
+**响应字段说明:**
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `records` | array | 返回的记录数组 |
+| `total` | integer | 匹配过滤条件的记录总数（应用 limit/offset 前） |
+| `returned` | integer | 本次实际返回的记录数量 |
+
+> **分页元数据**：`total` 字段返回所有匹配记录的总数，`returned` 字段返回本次实际返回的数量。客户端可据此计算总页数和实现分页 UI。
+
 ### 4. insert_record
 
 插入新记录。

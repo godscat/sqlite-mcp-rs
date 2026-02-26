@@ -14,6 +14,7 @@ pub trait DatabaseAdapter: Send + Sync {
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Result<Vec<serde_json::Value>>;
+    async fn count(&self, table: &str, filters: Option<QueryFilter>) -> Result<usize>;
     async fn insert(&self, table: &str, data: serde_json::Value) -> Result<i64>;
     async fn update(
         &self,

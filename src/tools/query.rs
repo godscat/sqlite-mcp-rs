@@ -19,6 +19,7 @@ pub struct QueryRecordsInput {
 pub struct QueryRecordsOutput {
     pub records: Vec<serde_json::Value>,
     pub total: usize,
+    pub returned: usize,
 }
 
 pub async fn execute(
@@ -26,11 +27,13 @@ pub async fn execute(
     args: &serde_json::Value,
 ) -> anyhow::Result<String> {
     let input: QueryRecordsInput = serde_json::from_value(args.clone())?;
+    let total = db.count(&input.table, input.filters.clone()).await?;
     let records = db.select(&input.table, input.filters, input.orders, input.limit, input.offset).await?;
-    let total = records.len();
+    let returned = records.len();
     let output = QueryRecordsOutput {
         records,
         total,
+        returned,
     };
     serde_json::to_string_pretty(&output).map_err(anyhow::Error::from)
 }

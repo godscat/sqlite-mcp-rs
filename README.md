@@ -111,35 +111,14 @@ cargo build --release
     {"id": 1, "name": "张三", "age": 25},
     {"id": 2, "name": "张四", "age": 30}
   ],
-  "total": 2
+  "total": 50,
+  "returned": 2
 }
 ```
 
-**过滤操作符：**
-- `$eq`：等于
-- `$ne`：不等于
-- `$gt`：大于
-- `$gte`：大于等于
-- `$lt`：小于
-- `$lte`：小于等于
-- `$in`：在列表中
-- `$like`：模糊匹配
-
-**排序参数：**
-- `column`：排序字段名
-- `direction`：排序方向，可选 `asc`（升序）或 `desc`（降序），默认为 `desc`
-- `random`：设置为 `true` 时使用随机排序（与 `column`/`direction` 互斥）
-
-**输出：**
-```json
-{
-  "records": [
-    {"id": 1, "name": "张三", "age": 25},
-    {"id": 2, "name": "张四", "age": 30}
-  ],
-  "total": 2
-}
-```
+> **分页元数据**：
+> - `total`: 匹配过滤条件的记录总数（应用 limit/offset 前）
+> - `returned`: 本次实际返回的记录数量
 
 ### 4. insert_record
 插入一条新记录（只读模式下拒绝）。
