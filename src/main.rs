@@ -386,6 +386,25 @@ fn handle_tools_list(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
                         },
                         "required": ["table", "ids"]
                     }
+                },
+                {
+                    "name": "set_table_comment",
+                    "title": "Set Table Comment",
+                    "description": "Set or update the description of a table",
+                    "inputSchema": {
+                        "type": "object",
+                        "properties": {
+                            "table": {
+                                "type": "string",
+                                "description": "Table name"
+                            },
+                            "desc": {
+                                "type": "string",
+                                "description": "Table description"
+                            }
+                        },
+                        "required": ["table", "desc"]
+                    }
                 }
             ]
         }
@@ -416,6 +435,7 @@ async fn handle_tools_call(
         "batch_insert" => tools::batch::insert_execute(db, arguments).await?,
         "batch_update" => tools::batch::update_execute(db, arguments).await?,
         "batch_delete" => tools::batch::delete_execute(db, arguments).await?,
+        "set_table_comment" => tools::set_table_comment::execute(db, arguments).await?,
         _ => return Err(anyhow!("Unknown tool: {}", tool_name)),
     };
 

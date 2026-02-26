@@ -4,4 +4,5 @@ pub mod get_schema;
 pub mod insert;
 pub mod list_tables;
 pub mod query;
+pub mod set_table_comment;
 pub mod update;

@@ -164,6 +164,32 @@ impl SqliteDatabase {
         }
     }
 
+    fn table_exists(&self, conn: &rusqlite::Connection, table: &str) -> anyhow::Result<bool> {
+        let count: i64 = conn.query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='table' AND name=?",
+            [table],
+            |row| row.get(0),
+        ).map_err(|e| anyhow!("Failed to check if table '{}' exists: {}", table, e))?;
+
+        Ok(count > 0)
+    }
+
+    fn set_table_comment_internal(&self, conn: &rusqlite::Connection, table: &str, desc: &str) -> anyhow::Result<()> {
+        if !self.table_exists(conn, table)? {
+            return Err(anyhow!("Table '{}' does not exist", table));
+        }
+
+        self.ensure_auxiliary_tables_exist(conn)?;
+
+        conn.execute(
+            "INSERT OR REPLACE INTO _table_comment (table_name, table_desc) VALUES (?, ?)",
+            [table, desc],
+        ).map_err(|e| anyhow!("Failed to set table comment for '{}': {}", table, e))?;
+
+        info!("Set comment for table '{}': {}", table, desc);
+        Ok(())
+    }
+
 
 }
 
@@ -799,6 +825,15 @@ impl DatabaseAdapter for SqliteDatabase {
         info!("Batch deleted {} rows", affected);
         
         Ok(affected)
+    }
+
+    async fn set_table_comment(&self, table: &str, desc: &str) -> anyhow::Result<()> {
+        if self.readonly {
+            return Err(anyhow!("Cannot set table comment in read-only mode"));
+        }
+
+        let conn = self.conn.lock().map_err(|e| anyhow!("Failed to lock connection: {}", e))?;
+        self.set_table_comment_internal(&conn, table, desc)
     }
 
     async fn is_readonly(&self) -> bool {
