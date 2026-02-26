@@ -2,6 +2,8 @@
 
 一个使用 Rust 实现的快速 SQLite MCP 服务器，支持基于 JSON 的数据库操作。
 
+**文档**: [快速开始](QUICKSTART.md) · [API 参考](USAGE.md) · [开发指南](AGENTS.md) · [故障排除](TROUBLESHOOTING.md)
+
 ## 特性
 
 - ✅ **纯 Rust 实现**：无需 Node.js 依赖，快速且高效
@@ -10,37 +12,20 @@
 - ✅ **批量操作**：支持批量插入、更新、删除（最多 100 条）
 - ✅ **动态主键检测**：自动检测主键（优先 `id`，fallback 到 `rowid`）
 - ✅ **只读模式**：可选的只读模式，保护数据安全
+- ✅ **表/列注释**：支持为表和列添加描述信息，便于理解数据结构
 - ✅ **可扩展架构**：数据库抽象层，便于未来扩展其他数据库
 
-## 安装
+## 快速开始
 
 ```bash
-# 克隆仓库
-git clone <repository-url>
-cd sqlite-mcp
-
-# 构建 release 版本
+# 构建
 cargo build --release
 
-# 可执行文件位于 target/release/sqlite-mcp
+# 运行
+./target/release/sqlite-mcp --db-path /path/to/database.db
 ```
 
-## 使用
-
-### 启动服务器
-
-```bash
-# 读写模式
-sqlite-mcp --db-path /path/to/database.db
-
-# 只读模式
-sqlite-mcp --db-path /path/to/database.db --readonly
-```
-
-### 命令行参数
-
-- `--db-path <PATH>`：SQLite 数据库文件路径（必需）
-- `--readonly`：只读模式（可选，默认：false）
+> 详细的配置步骤请参阅 [快速开始指南](QUICKSTART.md)
 
 ## MCP 工具
 
@@ -73,13 +58,16 @@ sqlite-mcp --db-path /path/to/database.db --readonly
 ```json
 {
   "name": "users",
+  "desc": "用户表",
   "columns": [
-    {"name": "id", "data_type": "INTEGER", "not_null": true, "is_primary_key": true},
-    {"name": "name", "data_type": "TEXT", "not_null": false, "is_primary_key": false}
+    {"name": "id", "desc": "主键ID", "data_type": "INTEGER", "not_null": true, "is_primary_key": true},
+    {"name": "name", "desc": "用户名称", "data_type": "TEXT", "not_null": false, "is_primary_key": false}
   ],
   "primary_key": "id"
 }
 ```
+
+> **注意**：`desc` 字段包含表和列的描述信息。首次查询时会自动创建辅助表 `_table_comment` 和 `_table_column_comment` 来存储这些描述，默认值为表名或列名。
 
 ### 3. query_records
 查询表中的记录，支持过滤和分页。
@@ -486,69 +474,21 @@ trait DatabaseAdapter: Send + Sync {
 
 要支持新的数据库类型（如 PostgreSQL、MySQL），只需实现 `DatabaseAdapter` trait 并更新 main.rs 中的实例化逻辑。
 
-## 日志
-
-默认日志级别为 DEBUG，记录所有 SQL 查询和参数。日志输出到 stderr。
-
-## 开发
+## 日志控制
 
 ```bash
-# 检查代码
-cargo check
-
-# 运行测试
-cargo test
-
-# 构建 debug 版本
-cargo build
-```
-
-## 日志和调试
-
-### 日志级别控制
-
-服务器支持通过环境变量控制日志输出：
-
-```bash
-# 完全禁用日志（推荐用于生产环境）
-RUST_LOG=off ./target/release/sqlite-mcp.exe --db-path database.db
+# 禁用日志（推荐生产环境）
+RUST_LOG=off ./target/release/sqlite-mcp --db-path database.db
 
 # 只显示错误
-RUST_LOG=error ./target/release/sqlite-mcp.exe --db-path database.db
-
-# 显示信息和警告（默认）
-RUST_LOG=info ./target/release/sqlite-mcp.exe --db-path database.db
-
-# 显示所有调试信息
-RUST_LOG=debug ./target/release/sqlite-mcp.exe --db-path database.db
+RUST_LOG=error ./target/release/sqlite-mcp --db-path database.db
 ```
 
-### 输出重定向
-
-- JSON 响应：输出到 stdout
-- 日志信息：输出到 stderr
-
-可以将日志重定向到文件：
-
-```bash
-./target/release/sqlite-mcp.exe --db-path database.db 2>> server.log
-```
-
-### 故障排除
-
-如果遇到 JSON 解析错误，请确保：
-
-1. 使用最新版本：`cargo build --release`
-2. 在 Claude Desktop 配置中设置 `RUST_LOG=error`
-3. 查看详细故障排除指南：[TROUBLESHOOTING.md](TROUBLESHOOTING.md)
+更多故障排除信息请参阅 [TROUBLESHOOTING.md](TROUBLESHOOTING.md)
 
 ## 许可证
 
 MIT
-
-## 贡献
-
-欢迎提交 Issue 和 Pull Request！
 
 ## 致谢
 

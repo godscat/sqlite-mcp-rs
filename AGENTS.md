@@ -42,16 +42,20 @@ src/
 ├── db/                  # 数据库抽象层
 │   ├── mod.rs          # 模块声明
 │   ├── adapter.rs      # DatabaseAdapter trait 定义
-│   └── sqlite.rs       # SQLite 具体实现
+│   └── sqlite.rs       # SQLite 具体实现（包含表/列注释功能）
 └── tools/               # MCP 工具实现
     ├── mod.rs          # 模块声明
     ├── list_tables.rs  # 列表表工具
-    ├── get_schema.rs   # 获取表结构工具
+    ├── get_schema.rs   # 获取表结构工具（返回包含注释的 schema）
     ├── query.rs        # 查询记录工具
     ├── insert.rs       # 插入记录工具
     ├── update.rs       # 更新记录工具
     ├── delete.rs       # 删除记录工具
     └── batch.rs        # 批量操作工具
+
+辅助表（首次使用时自动创建）：
+- _table_comment        # 存储表描述信息
+- _table_column_comment # 存储列描述信息
 ```
 
 ## 代码风格指南

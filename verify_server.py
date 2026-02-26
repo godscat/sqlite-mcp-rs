@@ -3,10 +3,10 @@
 快速验证 SQLite MCP 服务器是否正常工作
 """
 
-import subprocess
 import json
-import sys
 import os
+import subprocess
+import sys
 
 
 def test_server():
@@ -39,7 +39,7 @@ def test_server():
         stdout = result.stdout.strip() if result.stdout else ""
         stderr = ""
 
-        print(f"接收到的 stdout:")
+        print("接收到的 stdout:")
         print(stdout)
         print()
 
@@ -52,7 +52,7 @@ def test_server():
             response = json.loads(stdout)
             print("✅ 成功！响应是有效的 JSON")
             print()
-            print(f"响应内容:")
+            print("响应内容:")
             print(json.dumps(response, indent=2, ensure_ascii=False))
             print()
 
@@ -67,7 +67,7 @@ def test_server():
                 return False
 
         except json.JSONDecodeError as e:
-            print(f"❌ 响应不是有效的 JSON")
+            print("❌ 响应不是有效的 JSON")
             print(f"错误: {e}")
             print()
             print("请确保使用最新版本的服务器，并查看 TROUBLESHOOTING.md")

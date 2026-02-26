@@ -8,7 +8,7 @@
 
 1. **完整的数据库操作**
    - ✅ 列出所有表 (`list_tables`)
-   - ✅ 获取表结构 (`get_table_schema`)
+   - ✅ 获取表结构 (`get_table_schema`)，包含表/列描述信息
    - ✅ 查询记录，支持复杂过滤 (`query_records`)
    - ✅ 插入记录 (`insert_record`)
    - ✅ 更新记录 (`update_record`)
@@ -25,12 +25,17 @@
    - ✅ 组合条件查询
    - ✅ 分页支持
 
-4. **MCP 协议实现**
+4. **表/列注释功能**
+   - ✅ 自动创建辅助表存储表和列的描述信息
+   - ✅ 首次查询时自动初始化默认描述
+   - ✅ 返回表结构时包含描述字段
+
+5. **MCP 协议实现**
    - ✅ JSON-RPC 2.0 协议支持
    - ✅ 完整的工具定义和参数验证
    - ✅ JSON Schema 支持
 
-5. **安全性和可靠性**
+6. **安全性和可靠性**
    - ✅ SQL 注入防护（参数化查询）
    - ✅ 只读模式支持
    - ✅ 类型安全的数据转换
@@ -54,11 +59,11 @@ sqlite-mcp/
 │   ├── db/                  # 数据库抽象层
 │   │   ├── mod.rs          # 模块声明
 │   │   ├── adapter.rs      # DatabaseAdapter trait 定义
-│   │   └── sqlite.rs       # SQLite 具体实现
+│   │   └── sqlite.rs       # SQLite 具体实现（包含表/列注释功能）
 │   └── tools/               # MCP 工具实现
 │       ├── mod.rs          # 模块声明
 │       ├── list_tables.rs  # 列表表工具
-│       ├── get_schema.rs   # 获取表结构工具
+│       ├── get_schema.rs   # 获取表结构工具（返回包含注释的 schema）
 │       ├── query.rs        # 查询记录工具
 │       ├── insert.rs       # 插入记录工具
 │       ├── update.rs       # 更新记录工具
@@ -70,6 +75,10 @@ sqlite-mcp/
 ├── test_data.sql          # 测试数据脚本
 ├── demo.py               # 完整演示脚本
 └── target/release/sqlite-mcp.exe  # 可执行文件
+
+辅助表（首次使用时自动创建）：
+- _table_comment        # 存储表描述信息
+- _table_column_comment # 存储列描述信息
 ```
 
 ### 🧪 测试结果
