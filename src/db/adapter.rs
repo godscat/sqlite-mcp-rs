@@ -35,6 +35,7 @@ pub trait DatabaseAdapter: Send + Sync {
     ) -> Result<BatchResult>;
     async fn batch_delete(&self, table: &str, ids: Vec<i64>) -> Result<usize>;
     async fn set_table_comment(&self, table: &str, desc: &str) -> Result<()>;
+    async fn set_column_comment(&self, table: &str, column: &str, desc: &str) -> Result<()>;
 
     #[allow(dead_code)]
     async fn is_readonly(&self) -> bool;
