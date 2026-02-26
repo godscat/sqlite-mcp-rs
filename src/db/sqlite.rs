@@ -4,8 +4,8 @@ use std::sync::{Arc, Mutex};
 use tracing::{debug, info};
 
 use crate::db::adapter::{
-    BatchResult, ColumnInfo, DatabaseAdapter, FilterOperators, FilterValue, QueryFilter,
-    TableSchema,
+    BatchResult, ColumnInfo, DatabaseAdapter, FilterOperators, FilterValue, OrderClause,
+    OrderDirection, QueryFilter, TableSchema,
 };
 
 pub struct SqliteDatabase {
@@ -433,6 +433,72 @@ fn build_operator_conditions(
     }
 }
 
+fn validate_order_clauses(
+    orders: &[OrderClause],
+    valid_columns: &[String],
+) -> anyhow::Result<()> {
+    let mut random_count = 0;
+
+    for order in orders {
+        if order.random == Some(true) {
+            random_count += 1;
+            if order.column.is_some() || order.direction.is_some() {
+                return Err(anyhow!(
+                    "Invalid order clause: 'random' cannot be combined with 'column' or 'direction'"
+                ));
+            }
+        } else if let Some(col) = &order.column {
+            if !valid_columns.contains(col) {
+                return Err(anyhow!(
+                    "Invalid column '{}' in order clause. Valid columns: {}",
+                    col,
+                    valid_columns.join(", ")
+                ));
+            }
+        }
+    }
+
+    if random_count > 1 {
+        return Err(anyhow!(
+            "Only one random order clause is allowed, found {}",
+            random_count
+        ));
+    }
+
+    Ok(())
+}
+
+fn build_order_clause(orders: &[OrderClause]) -> String {
+    let clauses: Vec<String> = orders
+        .iter()
+        .map(|o| {
+            if o.random == Some(true) {
+                "RANDOM()".to_string()
+            } else {
+                let dir = match o.direction {
+                    Some(OrderDirection::Asc) => "ASC",
+                    Some(OrderDirection::Desc) | None => "DESC",
+                };
+                format!("{} {}", o.column.as_ref().unwrap(), dir)
+            }
+        })
+        .collect();
+    format!("ORDER BY {}", clauses.join(", "))
+}
+
+fn get_column_names(conn: &rusqlite::Connection, table: &str) -> anyhow::Result<Vec<String>> {
+    let mut stmt = conn.prepare(&format!("PRAGMA table_info({})", table))?;
+    let mut rows = stmt.query([])?;
+    let mut columns = Vec::new();
+
+    while let Some(row) = rows.next()? {
+        let name: String = row.get(1)?;
+        columns.push(name);
+    }
+
+    Ok(columns)
+}
+
 #[async_trait::async_trait]
 impl DatabaseAdapter for SqliteDatabase {
     async fn list_tables(&self) -> anyhow::Result<Vec<String>> {
@@ -526,14 +592,20 @@ impl DatabaseAdapter for SqliteDatabase {
         &self,
         table: &str,
         filters: Option<QueryFilter>,
+        orders: Option<Vec<OrderClause>>,
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> anyhow::Result<Vec<serde_json::Value>> {
-        debug!("Querying table '{}' with filters: {:?}", table, filters);
+        debug!("Querying table '{}' with filters: {:?}, orders: {:?}", table, filters, orders);
         let conn = self
             .conn
             .lock()
             .map_err(|e| anyhow!("Failed to lock connection: {}", e))?;
+
+        if let Some(ref order_clauses) = orders {
+            let valid_columns = get_column_names(&conn, table)?;
+            validate_order_clauses(order_clauses, &valid_columns)?;
+        }
 
         let mut sql = format!("SELECT * FROM {}", table);
         let mut params = Vec::new();
@@ -542,6 +614,12 @@ impl DatabaseAdapter for SqliteDatabase {
             let (where_clause, where_params) = build_where_clause(&filter)?;
             sql.push_str(&format!(" WHERE {}", where_clause));
             params = where_params;
+        }
+
+        if let Some(ref order_clauses) = orders {
+            if !order_clauses.is_empty() {
+                sql.push_str(&format!(" {}", build_order_clause(order_clauses)));
+            }
         }
 
         if let Some(limit) = limit {

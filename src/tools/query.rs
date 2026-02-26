@@ -1,4 +1,4 @@
-use crate::db::{adapter::QueryFilter, DatabaseAdapter};
+use crate::db::{adapter::QueryFilter, DatabaseAdapter, OrderClause};
 use schemars::JsonSchema;
 use serde::{Deserialize, Serialize};
 
@@ -7,6 +7,8 @@ pub struct QueryRecordsInput {
     pub table: String,
     #[serde(default)]
     pub filters: Option<QueryFilter>,
+    #[serde(default)]
+    pub orders: Option<Vec<OrderClause>>,
     #[serde(default)]
     pub limit: Option<usize>,
     #[serde(default)]
@@ -24,7 +26,7 @@ pub async fn execute(
     args: &serde_json::Value,
 ) -> anyhow::Result<String> {
     let input: QueryRecordsInput = serde_json::from_value(args.clone())?;
-    let records = db.select(&input.table, input.filters, input.limit, input.offset).await?;
+    let records = db.select(&input.table, input.filters, input.orders, input.limit, input.offset).await?;
     let total = records.len();
     let output = QueryRecordsOutput {
         records,

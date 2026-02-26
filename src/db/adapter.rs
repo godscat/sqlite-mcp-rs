@@ -10,6 +10,7 @@ pub trait DatabaseAdapter: Send + Sync {
         &self,
         table: &str,
         filters: Option<QueryFilter>,
+        orders: Option<Vec<OrderClause>>,
         limit: Option<usize>,
         offset: Option<usize>,
     ) -> Result<Vec<serde_json::Value>>;
@@ -128,6 +129,23 @@ pub struct FilterOperators {
     #[serde(rename = "$like")]
     #[serde(default)]
     pub like: Option<String>,
+}
+
+#[derive(Debug, Clone, Copy, Serialize, Deserialize, schemars::JsonSchema)]
+#[serde(rename_all = "lowercase")]
+pub enum OrderDirection {
+    Asc,
+    Desc,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, schemars::JsonSchema)]
+pub struct OrderClause {
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub column: Option<String>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub direction: Option<OrderDirection>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub random: Option<bool>,
 }
 
 impl schemars::JsonSchema for FilterValue {

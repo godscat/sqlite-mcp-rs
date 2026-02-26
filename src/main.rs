@@ -149,7 +149,7 @@ fn handle_initialize(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
             },
             "serverInfo": {
                 "name": "sqlite-mcp-rs",
-                "version": "0.1.0"
+                "version": env!("CARGO_PKG_VERSION")
             }
         }
     }))
@@ -188,7 +188,7 @@ fn handle_tools_list(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
                 {
                     "name": "query_records",
                     "title": "Query Records",
-                    "description": "Query records from a table with optional filters",
+                    "description": "Query records from a table with optional filters and ordering",
                     "inputSchema": {
                         "type": "object",
                         "properties": {
@@ -227,6 +227,28 @@ fn handle_tools_list(id: Option<&serde_json::Value>) -> anyhow::Result<serde_jso
                                         "$like": {
                                             "type": "string",
                                             "description": "Pattern matching (use % for wildcard)"
+                                        }
+                                    }
+                                }
+                            },
+                            "orders": {
+                                "type": "array",
+                                "description": "Ordering rules. Each rule can be either column-based or random. For column-based: use {\"column\": \"col_name\", \"direction\": \"asc|desc\"}. For random: use {\"random\": true}",
+                                "items": {
+                                    "type": "object",
+                                    "properties": {
+                                        "column": {
+                                            "type": "string",
+                                            "description": "Column name for ordering"
+                                        },
+                                        "direction": {
+                                            "type": "string",
+                                            "enum": ["asc", "desc"],
+                                            "description": "Sort direction (default: desc)"
+                                        },
+                                        "random": {
+                                            "type": "boolean",
+                                            "description": "Use random ordering (mutually exclusive with column/direction)"
                                         }
                                     }
                                 }
