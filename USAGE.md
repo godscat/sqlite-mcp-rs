@@ -104,7 +104,7 @@
 
 ### 3. query_records
 
-查询表中的记录，支持过滤和分页。
+查询表中的记录，支持过滤、排序和分页。
 
 **请求:**
 ```json
@@ -119,12 +119,26 @@
       "filters": {
         "age": {"$gt": 25}
       },
+      "orders": [
+        {"column": "age", "direction": "desc"},
+        {"column": "name", "direction": "asc"}
+      ],
       "limit": 10,
       "offset": 0
     }
   }
 }
 ```
+
+**参数说明:**
+
+| 参数 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `table` | string | 是 | 表名 |
+| `filters` | object | 否 | 过滤条件 |
+| `orders` | array | 否 | 排序规则 |
+| `limit` | integer | 否 | 返回记录数限制 |
+| `offset` | integer | 否 | 偏移量（分页） |
 
 **过滤操作符:**
 | 操作符 | 描述 |
@@ -137,6 +151,35 @@
 | `$lte` | 小于等于 |
 | `$in` | 在列表中 |
 | `$like` | 模糊匹配 |
+
+**排序参数:**
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| `column` | string | 排序字段名 |
+| `direction` | string | 排序方向：`asc`（升序）或 `desc`（降序），默认为 `desc` |
+| `random` | boolean | 设置为 `true` 时使用随机排序（与 `column`/`direction` 互斥） |
+
+**排序示例:**
+
+单列降序（默认）:
+```json
+{"orders": [{"column": "age"}]}
+```
+
+单列升序:
+```json
+{"orders": [{"column": "age", "direction": "asc"}]}
+```
+
+多列排序:
+```json
+{"orders": [{"column": "age", "direction": "desc"}, {"column": "name", "direction": "asc"}]}
+```
+
+随机排序:
+```json
+{"orders": [{"random": true}], "limit": 5}
+```
 
 ### 4. insert_record
 
@@ -269,6 +312,79 @@
       "table": "users",
       "ids": [1, 2, 3]
     }
+  }
+}
+```
+
+### 10. set_table_comment
+
+设置或更新表的描述注释（只读模式下拒绝）。
+
+**请求:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "method": "tools/call",
+  "params": {
+    "name": "set_table_comment",
+    "arguments": {
+      "table": "users",
+      "desc": "用户信息表，存储用户的基本信息"
+    }
+  }
+}
+```
+
+**响应:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 12,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"table\":\"users\",\"desc\":\"用户信息表，存储用户的基本信息\"}"
+      }
+    ]
+  }
+}
+```
+
+### 11. set_column_comment
+
+设置或更新列的描述注释（只读模式下拒绝）。
+
+**请求:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "method": "tools/call",
+  "params": {
+    "name": "set_column_comment",
+    "arguments": {
+      "table": "users",
+      "column": "name",
+      "desc": "用户的全名"
+    }
+  }
+}
+```
+
+**响应:**
+```json
+{
+  "jsonrpc": "2.0",
+  "id": 13,
+  "result": {
+    "content": [
+      {
+        "type": "text",
+        "text": "{\"table\":\"users\",\"column\":\"name\",\"desc\":\"用户的全名\"}"
+      }
+    ]
   }
 }
 ```

@@ -70,7 +70,7 @@ cargo build --release
 > **注意**：`desc` 字段包含表和列的描述信息。首次查询时会自动创建辅助表 `_table_comment` 和 `_table_column_comment` 来存储这些描述，默认值为表名或列名。
 
 ### 3. query_records
-查询表中的记录，支持过滤和分页。
+查询表中的记录，支持过滤、排序和分页。
 
 **输入：**
 ```json
@@ -80,6 +80,10 @@ cargo build --release
     "age": {"$gte": 18},
     "name": {"$like": "%张%"}
   },
+  "orders": [
+    {"column": "age", "direction": "desc"},
+    {"column": "name", "direction": "asc"}
+  ],
   "limit": 10,
   "offset": 0
 }
@@ -94,6 +98,37 @@ cargo build --release
 - `$lte`：小于等于
 - `$in`：在列表中
 - `$like`：模糊匹配
+
+**排序参数：**
+- `column`：排序字段名
+- `direction`：排序方向，可选 `asc`（升序）或 `desc`（降序），默认为 `desc`
+- `random`：设置为 `true` 时使用随机排序（与 `column`/`direction` 互斥）
+
+**输出：**
+```json
+{
+  "records": [
+    {"id": 1, "name": "张三", "age": 25},
+    {"id": 2, "name": "张四", "age": 30}
+  ],
+  "total": 2
+}
+```
+
+**过滤操作符：**
+- `$eq`：等于
+- `$ne`：不等于
+- `$gt`：大于
+- `$gte`：大于等于
+- `$lt`：小于
+- `$lte`：小于等于
+- `$in`：在列表中
+- `$like`：模糊匹配
+
+**排序参数：**
+- `column`：排序字段名
+- `direction`：排序方向，可选 `asc`（升序）或 `desc`（降序），默认为 `desc`
+- `random`：设置为 `true` 时使用随机排序（与 `column`/`direction` 互斥）
 
 **输出：**
 ```json
@@ -234,6 +269,46 @@ cargo build --release
 ```json
 {
   "affected_rows": 3
+}
+```
+
+### 10. set_table_comment
+设置或更新表的描述注释（只读模式下拒绝）。
+
+**输入：**
+```json
+{
+  "table": "users",
+  "desc": "用户信息表，存储用户的基本信息"
+}
+```
+
+**输出：**
+```json
+{
+  "table": "users",
+  "desc": "用户信息表，存储用户的基本信息"
+}
+```
+
+### 11. set_column_comment
+设置或更新列的描述注释（只读模式下拒绝）。
+
+**输入：**
+```json
+{
+  "table": "users",
+  "column": "name",
+  "desc": "用户的全名"
+}
+```
+
+**输出：**
+```json
+{
+  "table": "users",
+  "column": "name",
+  "desc": "用户的全名"
 }
 ```
 
